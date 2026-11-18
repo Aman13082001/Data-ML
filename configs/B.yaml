@@ -1,0 +1,48 @@
+# Company B - metal packaging, 8 ERPs, 25 currencies, vendor IDs only. Reports in USD.
+company: B
+output_name: B
+data_dir: data/B
+reporting_currency: USD
+
+taxonomy:
+  file: taxonomy_B.csv
+  level_columns: [category_l1, category_l2, category_l3]
+
+labels:
+  file: seed_labels.csv
+  data_dir: data/B
+  id_column: line_id
+  include_column: include
+  level_columns: [category_l1, category_l2, category_l3]
+
+fx:
+  file: fx_rates_usd.csv
+  currency_column: currency
+  month_column: month
+  rate_column: units_per_usd
+
+sources:
+  - name: ap
+    role: primary
+    file: invoice_lines.csv
+    id_column: line_id
+    amount: {column: line_amount, gross: false}
+    # currency_rate = units of line currency per 1 USD; blank -> fx table for the invoice month
+    # USD lines stay 1:1 even when a rate is filled in (1,279 USD lines carry ~17.5, an MXN rate).
+    # A given rate more than 1.5x away from the table rate for that month is replaced by the table rate.
+    currency: {column: currency, rate_column: currency_rate, rate_direction: units_per_reporting, rate_sanity_factor: 1.5}
+    date: {columns: [invoice_date, posting_date], valid_from: "2023-01-01", valid_to: "2025-12-31"}
+    supplier: {id_column: vendor_id}
+    description: [line_description]
+    item_code: material_number
+    quantity: quantity
+    po: {column: po_number}
+    invoice: {column: invoice_number}
+    classifier_text: [gl_account_description]
+    classifier_tokens: [gl_account, supplier_type, po_type, document_type, source_system]
+    duplicate_keys: ALL_SOURCE_COLUMNS          # a line exported twice is identical except its line_id
+
+exclusion_rules:
+  - column: gl_account_description          # intercompany payables accounts
+    reason: NON_PROCUREMENT
+    pattern: '^\s*(IC\d+|IC\s+Payables?|I/C\s+Payables?|Intercompany\b.*)\s*$'

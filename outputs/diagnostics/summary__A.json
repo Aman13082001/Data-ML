@@ -1,0 +1,19 @@
+{
+  "records": 65549,
+  "included": 41239,
+  "total_spend": 2847654773.82,
+  "currency": "ZAR",
+  "exclusions": {
+    "INCLUDED": 41239,
+    "DUPLICATE": 23807,
+    "NOT_APPROVED": 315,
+    "CANCELLED": 188
+  },
+  "suppliers": 70,
+  "items": 4660,
+  "classifier": "supervised",
+  "unparsed_dates": 0,
+  "out_of_range_dates": 0,
+  "no_fx_rate": 0,
+  "runtime_sec": 97.5
+}

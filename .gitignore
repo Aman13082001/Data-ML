@@ -1,0 +1,12 @@
+# Task data is confidential - never commit it
+data/
+*.csv
+!outputs/*.csv
+!submission/*.csv
+*.xlsx
+*.parquet
+*.pkl
+__pycache__/
+*.pyc
+.venv/
+work/

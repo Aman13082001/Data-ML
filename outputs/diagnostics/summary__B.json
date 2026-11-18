@@ -1,0 +1,18 @@
+{
+  "records": 41028,
+  "included": 37932,
+  "total_spend": 328563309.0,
+  "currency": "USD",
+  "exclusions": {
+    "INCLUDED": 37932,
+    "NON_PROCUREMENT": 2492,
+    "DUPLICATE": 604
+  },
+  "suppliers": 3912,
+  "items": 16262,
+  "classifier": "supervised",
+  "unparsed_dates": 0,
+  "out_of_range_dates": 0,
+  "no_fx_rate": 0,
+  "runtime_sec": 32.9
+}

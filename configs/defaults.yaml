@@ -1,0 +1,68 @@
+# Shared defaults merged under every company config (company values win).
+output_prefix: AK_Sharma
+
+# Invoice status -> CANCELLED / NOT_APPROVED / counts. Matched case-insensitively.
+status_rules:
+  cancelled_pattern: '\b(cancel+ed|cancel|void(ed)?|revers(ed|al)|deleted)\b'
+  not_approved_pattern: '\b(reject(ed)?|on[ _-]?hold|hold|disput(e|ed)|submitted|pending|draft|parked|blocked|await\w*|unpaid|not[ _-]?approved|in[ _-]?review|open)\b'
+  include_pattern: '\b(paid|approved|posted|cleared|complete(d)?|closed|released|processed|accepted)\b'
+  blank_counts: true
+
+# Generic non-procurement rules, applied to every company after its own rules.
+# field = canonical column (description, supplier_name, text_extra); column = original column name.
+default_exclusion_rules:
+  - field: description
+    reason: NON_PROCUREMENT
+    pattern: '\b((sales|use|state|local|gst|hst|pst|qst|vat|withholding|excise|property|stamp|payroll|income|corporate)\s*(&\s*(use|local)\s*)?tax(es)?|(input|output)\s+tax|tax\s+(expense|payable|levy|payment)|accrued[- ](sales|gst|vat|tax))\b'
+    unless: '\b(consult\w*|advis\w*|services?|prep\w*|work|software|assistance|program|accountant)\b'
+  - field: description
+    reason: NON_PROCUREMENT
+    pattern: '\b(garnish\w*|inter[- ]?company|intra[- ]?group|royalt(y|ies)|dividends?|bank\s+charges?|finance\s+charges?|interest\s+(charge|expense|payment)s?|loan\s+(repayment|interest)|partner\s+billings?|revenue\s+share|profit\s+share|penalt(y|ies))\b'
+  - field: description
+    reason: NON_PROCUREMENT
+    pattern: '\b(salar(y|ies)|wages|payroll)\b'
+    unless: '\b(services?|software|system|processing|consult\w*|provider)\b'
+  - field: supplier_name
+    reason: NON_PROCUREMENT
+    pattern: '\b(revenue\s+service|tax\s+authority|inland\s+revenue|receiver\s+of\s+revenue|internal\s+revenue|customs\s+and\s+excise|ministry\s+of\s+finance)\b'
+
+supplier_dedup:
+  fuzzy_threshold: 92
+  block: 2
+  merge_on_vendor_id: true
+  legal_suffixes: [PTY, PROPRIETARY, LTD, LIMITED, CC, SA, INC, INCORPORATED, LLC, LLP, PLC, GMBH, AG, BV, NV,
+                   SRL, SPA, SAS, SARL, CORP, CORPORATION, CO, COMPANY, AB, OY, KG, LTDA, CV, DE, SL, SAU, SRO,
+                   PVT, PRIVATE, KFT, ZOO, SP, OOO, AS, APS, PTE, BHD, SDN, THE]
+
+item_dedup:
+  fuzzy_threshold: 94
+  fuzzy_min_len: 8
+  min_text_len: 3
+  max_texts_per_code: 25      # a code used for many different texts is a placeholder, not an item
+  generic_descriptions: [PRODUCT, PRODUCTS, PART, PARTS, MATERIAL, MATERIALS, SERVICE, SERVICES, GOODS, ITEM, ITEMS,
+                         MISC, MISCELLANEOUS, VARIOUS, SUPPLIES, OTHER, OTHERS, GENERAL, NA, N/A, TBD, NO OBJECT,
+                         SEE ATTACHED, AS PER QUOTE, AS PER INVOICE, INVOICE, SUNDRY, SUNDRIES]
+
+supervised:
+  C: 10.0
+  item_memory: true
+  item_memory_purity: 0.8
+
+zero_shot:
+  level_weights: [1.0, 0.7, 0.45, 0.3]   # leaf, parent, grandparent, ...
+  supplier_weight: 0.5
+  w_word: 1.0
+  w_char: 0.8
+  char_floor: 0.1
+  w_transfer: 0.6
+  temperature: 0.1
+  self_train_rounds: 2
+  pseudo_label_share: 0.5
+  self_train_C: 3.0
+  zs_weight: 0.3
+  item_smooth: 1.0
+  supplier_smooth: 0.5
+
+# Labelled data of other companies: used only to learn generic
+# word -> category-word associations when a company has no labels.
+transfer_from: []
