@@ -7,7 +7,7 @@ Supported layouts (config `taxonomy:`):
 """
 import pandas as pd
 
-from .config import data_path, read_table
+from .config import read_table, resolve_file
 
 
 def _paths_from_adjacency(t, tc):
@@ -31,7 +31,8 @@ def _paths_from_adjacency(t, tc):
 
 def load_taxonomy(cfg):
     tc = cfg["taxonomy"]
-    t = read_table(data_path(cfg, tc["file"]), sep=tc.get("sep"), encoding=tc.get("encoding"))
+    t = read_table(resolve_file(cfg, tc["file"], tc.get("level_columns") or ([tc["path_column"]] if tc.get("path_column") else [])),
+                   sep=tc.get("sep"), encoding=tc.get("encoding"))
     t.columns = [str(c).strip() for c in t.columns]
     t = t.fillna("")
     if tc.get("path_column"):

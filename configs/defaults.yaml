@@ -15,6 +15,9 @@ default_exclusion_rules:
     reason: NON_PROCUREMENT
     pattern: '\b((sales|use|state|local|gst|hst|pst|qst|vat|withholding|excise|property|stamp|payroll|income|corporate)\s*(&\s*(use|local)\s*)?tax(es)?|(input|output)\s+tax|tax\s+(expense|payable|levy|payment)|accrued[- ](sales|gst|vat|tax))\b'
     unless: '\b(consult\w*|advis\w*|services?|prep\w*|work|software|assistance|program|accountant)\b'
+  - field: description              # a line that is only a tax: 'VAT', 'GST 15%', 'IVA', 'Output VAT'
+    reason: NON_PROCUREMENT
+    pattern: '^\W*((input|output)\s+)?(vat|gst|hst|pst|iva|tva|mwst|ust|igv|kdv|tax|taxes)(\s+(input|output|payable|amount|charge))?\W*(\d+([.,]\d+)?\s*%?)?\W*$'
   - field: description
     reason: NON_PROCUREMENT
     pattern: '\b(garnish\w*|inter[- ]?company|intra[- ]?group|royalt(y|ies)|dividends?|bank\s+charges?|finance\s+charges?|interest\s+(charge|expense|payment)s?|loan\s+(repayment|interest)|partner\s+billings?|revenue\s+share|profit\s+share|penalt(y|ies))\b'

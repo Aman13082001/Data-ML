@@ -31,11 +31,52 @@ def load_config(path, data_dir=None):
     cfg = deep_merge(_read(DEFAULTS), _read(path))
     cfg["_config_path"] = os.path.abspath(path)
     # data_dir: CLI override > config value (relative to repo root)
-    d = data_dir or cfg.get("data_dir", ".")
+    base = cfg.get("data_dir", ".")
+    base = base if os.path.isabs(base) else os.path.join(REPO, base)
+    d = data_dir or base
     if not os.path.isabs(d):
         d = os.path.join(REPO, d)
     cfg["data_dir"] = d
+    cfg["_build_data_dir"] = base       # where the original (build) files live
     return cfg
+
+
+def _header(path):
+    try:
+        return set(read_table(path).columns.str.strip()) if os.path.getsize(path) < 2e8 else set()
+    except Exception:
+        return set()
+
+
+def resolve_file(cfg, filename, required_cols=(), fallback=True):
+    """Find a configured file. Order: <data_dir>/<filename>; a file in data_dir
+    whose header holds all required columns (new extracts may be renamed);
+    then the build data dir (tree / FX / labels are not resent with new records)."""
+    p = data_path(cfg, filename)
+    if p and os.path.exists(p):
+        return p
+    d = cfg["data_dir"]
+    if required_cols and os.path.isdir(d):
+        hits = []
+        for f in sorted(os.listdir(d)):
+            fp = os.path.join(d, f)
+            if os.path.isfile(fp) and f.lower().endswith((".csv", ".txt", ".tsv", ".xlsx", ".xls")):
+                h = _header(fp)
+                if set(required_cols) <= h:
+                    hits.append(fp)
+        if len(hits) == 1:
+            print(f"  note: '{filename}' not found; using {os.path.basename(hits[0])} (matching columns)")
+            return hits[0]
+    if fallback:
+        for alt in [cfg.get("_build_data_dir"), (cfg.get("labels") or {}).get("data_dir")]:
+            if not alt:
+                continue
+            alt = alt if os.path.isabs(alt) else os.path.join(REPO, alt)
+            q = os.path.join(alt, filename)
+            if os.path.exists(q):
+                print(f"  note: '{filename}' not in {d}; using {q}")
+                return q
+    raise FileNotFoundError(f"{filename} not found in {d}")
 
 
 def read_table(path, **opts):

@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from .clean import fx_lookup, parse_dates, parse_numbers, parse_rate
-from .config import data_path, read_table
+from .config import data_path, read_table, resolve_file
 
 
 def _col(df, name):
@@ -45,7 +45,7 @@ def load_fx(cfg):
     fxc = cfg.get("fx")
     if not fxc or not fxc.get("file"):
         return None
-    fx = read_table(data_path(cfg, fxc["file"]))
+    fx = read_table(resolve_file(cfg, fxc["file"], [fxc.get("currency_column", "currency"), fxc.get("rate_column", "rate")]))
     fx = pd.DataFrame({
         "currency": fx[fxc.get("currency_column", "currency")].str.strip().str.upper(),
         "month": pd.to_datetime(fx[fxc.get("month_column", "month")], errors="coerce").dt.to_period("M"),
@@ -55,8 +55,10 @@ def load_fx(cfg):
 
 
 def load_source(cfg, sc, fx):
-    df = read_table(data_path(cfg, sc["file"]), sep=sc.get("sep"), encoding=sc.get("encoding"),
-                    sheet=sc.get("sheet", 0))
+    req = [c for c in [sc.get("id_column"), (sc.get("amount") or {}).get("column")] if c]
+    # new extracts are never taken from the build folder: fallback only for files that are not records
+    df = read_table(resolve_file(cfg, sc["file"], req, fallback=False), sep=sc.get("sep"),
+                    encoding=sc.get("encoding"), sheet=sc.get("sheet", 0))
     df.columns = [str(c).strip() for c in df.columns]
     n = len(df)
     out = pd.DataFrame(index=df.index)
