@@ -32,6 +32,21 @@ python -m spendcube --config configs/C.yaml --out-dir submission    # no labels 
 ```
 Options: `--hide-labels` classifies from the tree alone, which is how I measured zero-shot accuracy on A.
 
+## Re-running the blind test (for reviewers)
+1. Put each data set in its own folder under `data/`. File names don't have to match the configs: a missing file is found by its column headers, and the tree, FX and label files are taken from the original `data/A` and `data/B` folders if they aren't resent.
+   ```
+   data/A/   data/B/      original kit (A2 and B2 train on these labels)
+   data/A2/  data/B2/     new records, same layouts
+   data/C/   C's invoice-line file + its category tree
+   ```
+2. Run the three commands:
+   ```bash
+   python -m spendcube --config configs/A.yaml      --data-dir data/A2 --name A2 --out-dir submission
+   python -m spendcube --config configs/B.yaml      --data-dir data/B2 --name B2 --out-dir submission
+   python -m spendcube --config submission/C.yaml   --data-dir data/C  --name C  --out-dir submission
+   ```
+3. This writes `submission/AK_Sharma__A2.csv`, `__B2.csv` and `__C.csv`. C has no labels, so it is classified zero-shot from its tree. The C config was written at the blind test, as the brief asks: it is the only file added after the build deadline, and it contains no code.
+
 Runtime on a laptop CPU: A (65,549 records) takes about 1.5 min, and B (41,028) about 30 s.
 
 ## Output
