@@ -56,12 +56,13 @@ def build_records(cfg):
     log("cross-system matches: " + json.dumps(how[how != ""].value_counts().to_dict()))
 
     # keys; a duplicate inherits the keys of the record it duplicates
-    df["supplier_key"] = supplier_keys(df, cfg)
+    df["supplier_key"], df["supplier_cluster"] = supplier_keys(df, cfg)
     pos = pd.Series(df.index, index=df["record_id"])
     li = df["link"] != ""
     src = pos.reindex(df.loc[li, "link"]).values
     df.loc[li, "supplier_key"] = df.loc[src, "supplier_key"].values
-    df["item_key"] = item_keys(df, cfg, df["supplier_key"])
+    df.loc[li, "supplier_cluster"] = df.loc[src, "supplier_cluster"].values
+    df["item_key"] = item_keys(df, cfg, df["supplier_cluster"])
     df.loc[li, "item_key"] = df.loc[src, "item_key"].values
     log(f"suppliers: {df['supplier_key'].nunique():,} keys, items: {df['item_key'].nunique():,} keys")
 
@@ -139,8 +140,8 @@ def classify_records(df, cfg, tax):
         tr, _ = got
         tr = tr[tr["leaf_id"].isin(leaf_ids)]
         P, classes = C.classify_supervised(
-            sub, C.line_text(tr), C.tokens_col(tr, tr["supplier_key"]), tr["leaf_id"].values,
-            sub["supplier_key"], sub["item_key"].values, train_items=tr["item_key"].values,
+            sub, C.line_text(tr), C.tokens_col(tr, tr["supplier_cluster"]), tr["leaf_id"].values,
+            sub["supplier_cluster"], sub["item_key"].values, train_items=tr["item_key"].values,
             sc=cfg.get("supervised", {}))
         P = pd.DataFrame(P, columns=classes).reindex(columns=leaf_ids, fill_value=0.0).values
     else:
@@ -149,7 +150,7 @@ def classify_records(df, cfg, tax):
         if srcs:
             assoc = C.learn_transfer(srcs)
             log(f"learned {len(assoc):,} word->category-word associations from other companies")
-        P = C.classify_zero_shot(sub, tax, sub["supplier_key"], sub["item_key"].values, assoc,
+        P = C.classify_zero_shot(sub, tax, sub["supplier_cluster"], sub["item_key"].values, assoc,
                                  cfg.get("zero_shot", {}))
     best, conf = C.hierarchical_decode(P, tax)
     n_levels = max(tax.attrs.get("n_levels", 3), int(tax["depth"].max()))

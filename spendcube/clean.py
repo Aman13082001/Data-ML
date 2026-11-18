@@ -13,7 +13,7 @@ def parse_number(s):
         return np.nan
     if isinstance(s, (int, float, np.number)):
         return float(s)
-    t = str(s).strip().replace(" ", "").replace(" ", "")
+    t = str(s).strip().replace(" ", " ")
     if t == "" or t.lower() in {"nan", "none", "null", "-"}:
         return np.nan
     neg = False
@@ -21,7 +21,13 @@ def parse_number(s):
         neg, t = True, t[1:-1]
     if t.endswith("-"):
         neg, t = True, t[:-1]
-    t = re.sub(r"[^\d,.\-+eE]", "", t)
+    # currency symbols/codes may lead or trail ('R 1,234.00', '1234 ZAR'); letters
+    # inside the value mean it is not a number ('V500009', 'PO-123')
+    t = re.sub(r"^([A-Za-z]{1,3}\s+|[^\w\s\-+.,(]+)", "", t)
+    t = re.sub(r"(\s+[A-Za-z]{1,3}|%|[^\w\s.,)]+)$", "", t)
+    t = t.replace(" ", "")
+    if re.search(r"[^\d,.\-+]", t) and not re.fullmatch(r"-?\d+(\.\d+)?[eE][-+]?\d+", t):
+        return np.nan
     if "," in t and "." in t:
         # whichever separator comes last is the decimal mark
         if t.rfind(",") > t.rfind("."):

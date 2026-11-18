@@ -87,6 +87,7 @@ def supplier_keys(df, cfg):
         c = Counter(x for x in g if x)
         label[r] = (c.most_common(1)[0][0] if c else r).strip().upper()
     key = root.map(label)
+    cluster = key.copy()        # the real supplier, kept for the classifier
     # optional client convention: suppliers outside the vendor master (their
     # records mostly carry no vendor id) share one key
     um = sc.get("unmastered")
@@ -98,7 +99,7 @@ def supplier_keys(df, cfg):
         if um.get("include_clusters_without_id_source", True):
             bucket |= set(root.unique()) - set(share.index)
         key = key.where(~root.isin(bucket), um.get("key", "UNMASTERED SUPPLIER"))
-    return key
+    return key, cluster
 
 
 # ------------------------------------------------------------------ items

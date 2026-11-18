@@ -70,8 +70,8 @@ def main(company):
     pred = np.empty(len(tr), dtype=object)
     for a, b in kf.split(tr):
         A_, B_ = tr.iloc[a], tr.iloc[b]
-        P, classes = C.classify_supervised(B_, C.line_text(A_), C.tokens_col(A_, A_["supplier_key"]),
-                                           A_["leaf_id"].values, B_["supplier_key"], B_["item_key"].values,
+        P, classes = C.classify_supervised(B_, C.line_text(A_), C.tokens_col(A_, A_["supplier_cluster"]),
+                                           A_["leaf_id"].values, B_["supplier_cluster"], B_["item_key"].values,
                                            train_items=A_["item_key"].values, sc=cfg.get("supervised", {}))
         pred[b] = np.array(classes)[P.argmax(axis=1)]
     print(f"supervised 3-fold CV ({time.time()-t0:.0f}s):",
@@ -83,7 +83,7 @@ def main(company):
     for use_transfer in (False, True):
         assoc = C.learn_transfer(transfer_sources({"transfer_from": other})) if use_transfer else None
         sub = tr
-        P = C.classify_zero_shot(sub, tax, sub["supplier_key"], sub["item_key"].values, assoc,
+        P = C.classify_zero_shot(sub, tax, sub["supplier_cluster"], sub["item_key"].values, assoc,
                                  cfg.get("zero_shot", {}))
         pz = tax["leaf_id"].values[P.argmax(axis=1)]
         print(f"zero-shot labels hidden, transfer={use_transfer} ({time.time()-t0:.0f}s):",

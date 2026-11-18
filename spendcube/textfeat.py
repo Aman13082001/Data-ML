@@ -30,6 +30,7 @@ class Lexicon:
         self.word2groups = {}      # single word -> groups
         self.phrases = []          # (frozenset of words, group): all words must be present
         for g, words in lx.items():
+            g = g.split("__")[0]           # 'fastener__intl' adds words to 'fastener'
             for w in words:
                 toks = self.tokens(str(w), expand=False)
                 if len(toks) == 1:
